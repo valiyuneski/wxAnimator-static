@@ -2,11 +2,17 @@
 #include <wx/sizer.h>
 #include <wx/panel.h>
 #include <wx/artprov.h>
+#include <wx/image.h>
+#include <wx/filename.h>
+
+#include <wx/filename.h>
+#include <wx/stdpaths.h>
 
 // Include all animated class headers
 #include "include/wxStaticTextAnimated.h"
 #include "include/wxButtonAnimated.h"
 #include "include/wxImageAnimated.h"
+#include "include/wxCheckBoxAnimated.h"
 
 class MainFrame : public wxFrame {
 public:
@@ -26,6 +32,7 @@ private:
     wxButtonAnimated* m_animatedButton1;
     wxButtonAnimated* m_animatedButton2;
     wxImageAnimated* m_animatedImage;
+    wxCheckBoxAnimated* m_animatedCheckBox;
     wxStaticText* m_infoText;
     
     void CreateControls() {
@@ -43,26 +50,61 @@ private:
             "Animate Text");
         m_animatedButton2 = new wxButtonAnimated(mainPanel, wxID_ANY, 
             "Animate Image");
-        
-        // Create animated image with a sample image
-        wxBitmap bitmap = wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_OTHER, wxSize(64, 64));
-        wxImage image = bitmap.ConvertToImage();
-        m_animatedImage = new wxImageAnimated(mainPanel, image, wxID_ANY, 
-                                             wxDefaultPosition, wxSize(64, 64));
+ 
+        auto getImageRescaled = [&](const wxString &strImagePath, int iSize) -> wxImage {
+            wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
+            wxString appDir = fn.GetPath();
+            
+            // Try multiple possible locations for the src directory
+            wxString fullPath;
+            wxString possiblePaths[] = {
+                appDir + "/images/" + strImagePath, // Next to executable
+                wxStandardPaths::Get().GetResourcesDir() + "/images/" + strImagePath  // macOS bundle resources
+            };
+            
+            bool found = false;
+            for (const wxString& path : possiblePaths) {
+                if (wxFileExists(path)) {
+                    fullPath = path;
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (!found) {
+                wxLogMessage("Image not found in any location for '%s'", strImagePath);
+                wxLogMessage("Tried paths:");
+                for (const wxString& path : possiblePaths) {
+                    wxLogMessage("  %s", path);
+                }
+                return wxImage(); // Return empty image
+            }
+
+            wxImage image;
+            if(!image.LoadFile(fullPath, wxBITMAP_TYPE_PNG)) {
+                wxLogMessage("Failed to load image '%s'", fullPath);
+                return wxImage(); // Return empty image
+            }
+            
+            image = image.Rescale(iSize, iSize, wxIMAGE_QUALITY_HIGH);
+            return image;
+        };
+        m_animatedCheckBox = new wxCheckBoxAnimated(mainPanel, getImageRescaled("checked.png", 24), getImageRescaled("unchecked.png", 24), wxID_ANY, wxDefaultPosition, wxSize(24, 24));    
         
         // Create info text
         m_infoText = new wxStaticText(mainPanel, wxID_ANY, 
             "This example demonstrates all animated classes:\n"
             "• wxStaticTextAnimated - Animated text with font size and color changes\n"
             "• wxButtonAnimated - Animated buttons with click effects\n"
-            "• wxImageAnimated - Animated images with scaling and rotation effects",
+            "• wxImageAnimated - Animated images with scaling and rotation effects\n"
+            "• wxCheckBoxAnimated - Animated checkboxes with rotation and scale effects",
             wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY | wxTE_WORDWRAP);
         m_infoText->SetBackgroundColour(wxColour(250, 250, 220));
         
         // Set up the main panel as the window's content
         mainPanel->SetSizerAndFit(SetupMainPanelLayout(mainPanel, 
             m_animatedText, m_animatedButton1, m_animatedButton2, 
-            m_animatedImage, m_infoText));
+            m_animatedImage, m_animatedCheckBox, m_infoText));
     }
     
     wxSizer* SetupMainPanelLayout(wxPanel* panel, 
@@ -70,6 +112,7 @@ private:
                                   wxButtonAnimated* btn1,
                                   wxButtonAnimated* btn2,
                                   wxImageAnimated* img,
+                                  wxCheckBoxAnimated* chk,
                                   wxStaticText* info) {
         wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
         
@@ -105,6 +148,12 @@ private:
         wxStaticText* imgLabel = new wxStaticText(panel, wxID_ANY, "Animated Image:");
         mainSizer->Add(imgLabel, 0, wxLEFT | wxRIGHT, 20);
         mainSizer->Add(img, 0, wxALL | wxCENTER, 20);
+        
+        // Checkbox section
+        mainSizer->AddSpacer(10);
+        wxStaticText* chkLabel = new wxStaticText(panel, wxID_ANY, "Animated Checkbox:");
+        mainSizer->Add(chkLabel, 0, wxLEFT | wxRIGHT, 20);
+        mainSizer->Add(chk, 0, wxALL | wxCENTER, 20);
         
         // Info section
         mainSizer->AddSpacer(20);
@@ -154,6 +203,9 @@ private:
 class MyApp : public wxApp {
 public:
     virtual bool OnInit() override {
+        // Initialize image handlers for PNG support
+        wxInitAllImageHandlers();
+        
         MainFrame* frame = new MainFrame();
         frame->Show();
         return true;

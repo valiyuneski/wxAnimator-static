@@ -38,3 +38,9 @@ install(DIRECTORY include/ DESTINATION include)
 # Example executable
 add_executable(example example.cpp)
 target_link_libraries(example PRIVATE wxAnimator-static ${wxWidgets_LIBRARIES})
+
+# Copy images to build directory for example
+add_custom_command(TARGET example POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory 
+    ${CMAKE_SOURCE_DIR}/images ${CMAKE_BINARY_DIR}/images
+)
