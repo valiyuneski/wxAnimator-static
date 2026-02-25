@@ -35,6 +35,46 @@ private:
     wxCheckBoxAnimated* m_animatedCheckBox;
     wxStaticText* m_infoText;
     
+    // Helper function to load and rescale images
+    wxImage getImageRescaled(const wxString &strImagePath, int iSize) {
+        wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
+        wxString appDir = fn.GetPath();
+        
+        // Try multiple possible locations for the src directory
+        wxString fullPath;
+        wxString possiblePaths[] = {
+            appDir + "/images/" + strImagePath, // Next to executable
+            wxStandardPaths::Get().GetResourcesDir() + "/images/" + strImagePath  // macOS bundle resources
+        };
+        
+        bool found = false;
+        for (const wxString& path : possiblePaths) {
+            if (wxFileExists(path)) {
+                fullPath = path;
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            wxLogMessage("Image not found in any location for '%s'", strImagePath);
+            wxLogMessage("Tried paths:");
+            for (const wxString& path : possiblePaths) {
+                wxLogMessage("  %s", path);
+            }
+            return wxImage(); // Return empty image
+        }
+
+        wxImage image;
+        if(!image.LoadFile(fullPath, wxBITMAP_TYPE_PNG)) {
+            wxLogMessage("Failed to load image '%s'", fullPath);
+            return wxImage(); // Return empty image
+        }
+        
+        image = image.Rescale(iSize, iSize, wxIMAGE_QUALITY_HIGH);
+        return image;
+    }
+    
     void CreateControls() {
         // Create main panel
         wxPanel* mainPanel = new wxPanel(this);
@@ -50,45 +90,6 @@ private:
             "Animate Text");
         m_animatedButton2 = new wxButtonAnimated(mainPanel, wxID_ANY, 
             "Animate Image");
- 
-        auto getImageRescaled = [&](const wxString &strImagePath, int iSize) -> wxImage {
-            wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
-            wxString appDir = fn.GetPath();
-            
-            // Try multiple possible locations for the src directory
-            wxString fullPath;
-            wxString possiblePaths[] = {
-                appDir + "/images/" + strImagePath, // Next to executable
-                wxStandardPaths::Get().GetResourcesDir() + "/images/" + strImagePath  // macOS bundle resources
-            };
-            
-            bool found = false;
-            for (const wxString& path : possiblePaths) {
-                if (wxFileExists(path)) {
-                    fullPath = path;
-                    found = true;
-                    break;
-                }
-            }
-            
-            if (!found) {
-                wxLogMessage("Image not found in any location for '%s'", strImagePath);
-                wxLogMessage("Tried paths:");
-                for (const wxString& path : possiblePaths) {
-                    wxLogMessage("  %s", path);
-                }
-                return wxImage(); // Return empty image
-            }
-
-            wxImage image;
-            if(!image.LoadFile(fullPath, wxBITMAP_TYPE_PNG)) {
-                wxLogMessage("Failed to load image '%s'", fullPath);
-                return wxImage(); // Return empty image
-            }
-            
-            image = image.Rescale(iSize, iSize, wxIMAGE_QUALITY_HIGH);
-            return image;
-        };
         m_animatedCheckBox = new wxCheckBoxAnimated(mainPanel, getImageRescaled("checked.png", 24), getImageRescaled("unchecked.png", 24), wxID_ANY, wxDefaultPosition, wxSize(24, 24));    
         
         // Create info text
@@ -145,9 +146,8 @@ private:
         
         // Image section
         mainSizer->AddSpacer(10);
-        wxStaticText* imgLabel = new wxStaticText(panel, wxID_ANY, "Animated Image:");
-        mainSizer->Add(imgLabel, 0, wxLEFT | wxRIGHT, 20);
-        mainSizer->Add(img, 0, wxALL | wxCENTER, 20);
+        m_animatedImage = new wxImageAnimated(panel, getImageRescaled("index.png", 16));
+        mainSizer->Add(m_animatedImage, 0, wxALL | wxCENTER, 20);
         
         // Checkbox section
         mainSizer->AddSpacer(10);
