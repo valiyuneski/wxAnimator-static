@@ -83,7 +83,7 @@ private:
         m_animatedText = new wxStaticTextAnimated(mainPanel, wxID_ANY, 
             "Click buttons to see animations!", 
             wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
-        m_animatedText->SetBackgroundColour(wxColour(240, 240, 240));
+        // m_animatedText is fully transparent - no background color set
         
         // Create animated buttons
         m_animatedButton1 = new wxButtonAnimated(mainPanel, wxID_ANY, 

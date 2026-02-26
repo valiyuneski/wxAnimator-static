@@ -16,7 +16,8 @@ public:
                          long style = 0,
                          const wxString &name = wxASCII_STR(wxStaticTextNameStr))
                          : wxStaticText(parent, id, label, pos, sz, style, name) {
-        SetTransparent(128);
+        SetTransparent(wxALPHA_TRANSPARENT); // Fully transparent
+        SetBackgroundStyle(wxBG_STYLE_TRANSPARENT); // Transparent background style
 
         SetFont(wxFontInfo(iFontSize_).FaceName("Arial").Italic());
 
@@ -32,6 +33,26 @@ public:
 
         Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& event) {
             doAnimations();
+        });
+
+        Bind(wxEVT_PAINT, [this](wxPaintEvent& event) {
+            wxPaintDC dc(this);
+            
+            // Set transparent background mode
+            dc.SetBackgroundMode(wxTRANSPARENT);
+            
+            // Get current font and color
+            wxFont font = GetFont();
+            wxColour color = GetForegroundColour();
+            
+            // Set up DC
+            dc.SetFont(font);
+            dc.SetTextForeground(color);
+            
+            // Draw the text
+            wxString label = GetLabelText();
+            wxRect rect = GetClientRect();
+            dc.DrawLabel(label, rect, GetWindowStyleFlag());
         });
 
         animator_.Reset();
