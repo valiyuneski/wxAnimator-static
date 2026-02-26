@@ -19,13 +19,13 @@
 class MainFrame : public wxFrame {
 public:
     MainFrame() : wxFrame(nullptr, wxID_ANY, "wxAnimator Example - All Classes", 
-                         wxDefaultPosition, wxSize(800, 600)) {
+                         wxDefaultPosition, wxSize(600, 700)) {
         
         CreateControls();
         SetupLayout();
         BindEvents();
         
-        SetMinSize(wxSize(600, 600));
+        SetMinSize(wxSize(400, 700));
     }
     
     ~MainFrame() {
