@@ -1,5 +1,5 @@
-#ifndef WXMODESDLGANIMATED_H
-#define WXMODESDLGANIMATED_H
+#ifndef WXDLGANIMATED_H
+#define WXDLGANIMATED_H
 
 #include <wx/sizer.h>
 #include <wx/minifram.h>
@@ -8,10 +8,10 @@
 #include "animator.h"
 #include "animatedvalue.h"
 
-class wxModesDlgAnimated : public wxMiniFrame
+class wxDlgAnimated : public wxMiniFrame
 {
     public:
-        wxModesDlgAnimated(wxWindow *parent, wxWindowID id = wxID_ANY, const wxString& title = _T("wxProjectAxesDlg"))
+        wxDlgAnimated(wxWindow *parent, wxWindowID id = wxID_ANY, const wxString& title = _T("wxProjectAxesDlg"))
             : wxMiniFrame(parent, id, title, wxDefaultPosition, wxSize(800, 300), wxCAPTION|wxRESIZE_BORDER|wxCLOSE_BOX|wxSTAY_ON_TOP) {
             SetTransparent(wxByte(500));
 
@@ -99,4 +99,4 @@ class wxModesDlgAnimated : public wxMiniFrame
         std::vector<AnimatedValue> animatedValues_;
 };
 
-#endif // WXMODESDLGANIMATED_H
+#endif // WXSDLGANIMATED_H
