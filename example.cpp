@@ -4,15 +4,17 @@
 #include <wx/artprov.h>
 #include <wx/image.h>
 #include <wx/filename.h>
-
 #include <wx/filename.h>
 #include <wx/stdpaths.h>
+#include <wx/utils.h>
+#include <memory>
 
 // Include all animated class headers
 #include "include/wxStaticTextAnimated.h"
 #include "include/wxButtonAnimated.h"
 #include "include/wxImageAnimated.h"
 #include "include/wxCheckBoxAnimated.h"
+#include "include/wxDlgAnimated.h"
 
 class MainFrame : public wxFrame {
 public:
@@ -23,7 +25,15 @@ public:
         SetupLayout();
         BindEvents();
         
-        SetMinSize(wxSize(600, 400));
+        SetMinSize(wxSize(600, 600));
+    }
+    
+    ~MainFrame() {
+        // Safe cleanup of dialog - just let unique_ptr handle it
+        if (m_animatedDialog) {
+            m_animatedDialog->Hide();
+            m_animatedDialog.reset(); // unique_ptr will handle deletion
+        }
     }
 
 private:
@@ -34,6 +44,8 @@ private:
     wxImageAnimated* m_animatedImage;
     wxCheckBoxAnimated* m_animatedCheckBox;
     wxStaticText* m_infoText;
+    wxButton* m_openDialogBtn;
+    std::unique_ptr<wxDlgAnimated> m_animatedDialog;
     
     // Helper function to load and rescale images
     wxImage getImageRescaled(const wxString &strImagePath, int iSize) {
@@ -92,20 +104,27 @@ private:
             "Animate Image");
         m_animatedCheckBox = new wxCheckBoxAnimated(mainPanel, getImageRescaled("checked.png", 24), getImageRescaled("unchecked.png", 24), wxID_ANY, wxDefaultPosition, wxSize(24, 24));    
         
+        // Create button to open animated dialog
+        m_openDialogBtn = new wxButton(mainPanel, wxID_ANY, "Open Animated Dialog");
+        
+        // Initialize animated dialog as null (create it when needed)
+        m_animatedDialog = nullptr;
+        
         // Create info text
         m_infoText = new wxStaticText(mainPanel, wxID_ANY, 
             "This example demonstrates all animated classes:\n"
             "• wxStaticTextAnimated - Animated text with font size and color changes\n"
             "• wxButtonAnimated - Animated buttons with click effects\n"
             "• wxImageAnimated - Animated images with scaling and rotation effects\n"
-            "• wxCheckBoxAnimated - Animated checkboxes with rotation and scale effects",
+            "• wxCheckBoxAnimated - Animated checkboxes with rotation and scale effects\n"
+            "• wxDlgAnimated - Animated dialog with size animation effects",
             wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY | wxTE_WORDWRAP);
         m_infoText->SetBackgroundColour(wxColour(250, 250, 220));
         
         // Set up the main panel as the window's content
         mainPanel->SetSizerAndFit(SetupMainPanelLayout(mainPanel, 
             m_animatedText, m_animatedButton1, m_animatedButton2, 
-            m_animatedImage, m_animatedCheckBox, m_infoText));
+            m_animatedImage, m_animatedCheckBox, m_openDialogBtn, m_infoText));
     }
     
     wxSizer* SetupMainPanelLayout(wxPanel* panel, 
@@ -114,6 +133,7 @@ private:
                                   wxButtonAnimated* btn2,
                                   wxImageAnimated* img,
                                   wxCheckBoxAnimated* chk,
+                                  wxButton* dialogBtn,
                                   wxStaticText* info) {
         wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
         
@@ -155,6 +175,12 @@ private:
         mainSizer->Add(chkLabel, 0, wxLEFT | wxRIGHT, 20);
         mainSizer->Add(chk, 0, wxALL | wxCENTER, 20);
         
+        // Dialog section
+        mainSizer->AddSpacer(10);
+        wxStaticText* dlgLabel = new wxStaticText(panel, wxID_ANY, "Animated Dialog:");
+        mainSizer->Add(dlgLabel, 0, wxLEFT | wxRIGHT, 20);
+        mainSizer->Add(dialogBtn, 0, wxALL | wxEXPAND, 20);
+        
         // Info section
         mainSizer->AddSpacer(20);
         wxStaticText* infoLabel = new wxStaticText(panel, wxID_ANY, "Information:");
@@ -193,8 +219,49 @@ private:
             m_animatedImage->doAnimations();
         });
         
+        // Bind dialog button click event
+        m_openDialogBtn->Bind(wxEVT_BUTTON, [this](wxCommandEvent& event) {
+            try {
+                // Create and show the animated dialog on demand
+                if (!m_animatedDialog) {
+                    m_animatedDialog = std::make_unique<wxDlgAnimated>(this, wxID_ANY, "Animated Dialog Demo");
+                    
+                    if (m_animatedDialog) {
+                        // Bind dialog close event with simple approach
+                        m_animatedDialog->Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
+                            // Use CallAfter to avoid accessing destroyed objects
+                            CallAfter([this]() {
+                                m_animatedDialog.reset();
+                            });
+                            event.Skip();
+                        });
+                    }
+                }
+                
+                if (m_animatedDialog) {
+                    m_animatedDialog->Show(true);
+                    m_animatedDialog->Raise(); // Bring to front
+                }
+            } catch (const std::exception& e) {
+                wxLogError("Error creating dialog: %s", e.what());
+                if (m_animatedDialog) {
+                    m_animatedDialog.reset();
+                }
+            } catch (...) {
+                wxLogError("Unknown error creating dialog");
+                if (m_animatedDialog) {
+                    m_animatedDialog.reset();
+                }
+            }
+        });
+        
         // Bind window close event
         this->Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
+            // Clean up dialog before closing main frame
+            if (m_animatedDialog) {
+                m_animatedDialog->Hide();
+                m_animatedDialog.reset();
+            }
             Destroy();
         });
     }
