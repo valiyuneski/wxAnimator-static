@@ -1,6 +1,6 @@
 # wxAnimator Example
 
-This example demonstrates all three animated classes in the wxAnimator library:
+This example demonstrates all four animated classes in the wxAnimator library:
 
 ## Classes Demonstrated
 
@@ -21,6 +21,13 @@ This example demonstrates all three animated classes in the wxAnimator library:
 - **Animation**: Smooth scaling transformations
 - **Flexibility**: Can work with any wxImage
 - **Usage**: Click "Animate Image" button to see the image animation
+
+### 4. wxDlgAnimated
+- **Features**: Animated dialog window with size transitions
+- **Animation**: Smooth window size animations from compact to expanded states
+- **Memory Management**: Uses `std::unique_ptr` for safe dialog lifecycle management
+- **Usage**: Click "Open Animated Dialog" button to see the dialog animation
+- **Safe Closure**: Dialog can be safely opened and closed without application crashes
 
 ## Building the Example
 
@@ -57,15 +64,17 @@ This example demonstrates all three animated classes in the wxAnimator library:
 The example application includes:
 
 - **Interactive Demo**: Click buttons to trigger different animations
-- **Multiple Animation Types**: Shows text, button, and image animations
+- **Multiple Animation Types**: Shows text, button, image, and dialog animations
 - **Information Panel**: Explains what each class does
 - **Clean UI**: Well-organized layout with labeled sections
+- **Dialog Demo**: Animated dialog with safe memory management
 
 ## How It Works
 
 1. **Text Animation**: When you click "Animate Text", the text content changes and triggers a font size/color animation
 2. **Button Animation**: Both buttons animate themselves when clicked using the built-in animation system
 3. **Image Animation**: The "Animate Image" button triggers scaling animation on the displayed image
+4. **Dialog Animation**: The "Open Animated Dialog" button creates and shows an animated dialog with size transitions and safe memory management
 
 ## Code Structure
 
@@ -73,6 +82,7 @@ The example application includes:
 - `src/wxStaticTextAnimated.cpp`: Animated text implementation
 - `src/wxButtonAnimated.cpp`: Animated button implementation  
 - `src/wxImageAnimated.cpp`: Animated image implementation
+- `src/wxDlgAnimated.cpp`: Animated dialog implementation
 - `include/MyWxLib/`: Core animation headers
 
 ## Customization
